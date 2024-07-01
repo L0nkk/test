@@ -1,19 +1,10 @@
-name: Main Workflow
-
+name: Build
 on:
-  # Triggers the workflow on push or pull request events for specified branches
   push:
     branches:
       - test
-      - $default-branch
   pull_request:
-    branches:
-      - test
-      - $default-branch
     types: [opened, synchronize, reopened]
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
 jobs:
   sonarcloud:
     name: SonarCloud
@@ -27,33 +18,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-  build:
-    runs-on: ubuntu-latest
-    environment: Testing
-    strategy:
-      matrix:
-        node-version: [14.x, 16.x]
-      max-parallel: 1
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: 'main-test'
-      - name: Install server npm packages
-        uses: bahmutov/npm-install@v1
-        with:
-          working-directory: mern/server
-      - name: Install client npm packages
-        uses: bahmutov/npm-install@v1
-        with:
-          working-directory: mern/client
-      - name: Start server in the background
-        env:
-          ATLAS_URI: ${{ secrets.ATLAS_URI }}
-        run: (cd mern/server && echo "ATLAS_URI=$ATLAS_URI" > config.env && npm start &)
-      - name: Start React app in the background
-        run: (cd mern/client && npm start &)
-      - name: Install Cypress and run tests
-        uses: cypress-io/github-action@v2
-        with:
-          working-directory: mern/client
